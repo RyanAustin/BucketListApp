@@ -1,0 +1,8 @@
+<resources>
+    <string name="addLocation">Add Location</string>
+    <string name="settings">Settings</string>
+    <string name="delete">Delete</string>
+    <string name="title_activity_settings">Settings</string>
+    <string name="title_activity_location_screen">LocationScreen</string>
+    <string name="app_name">Bucket List</string>
+</resources>
