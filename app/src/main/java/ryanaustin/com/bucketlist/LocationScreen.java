@@ -24,11 +24,9 @@ public class LocationScreen extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location_screen);
         blAdapter = new BucketListDbAdapter(this);
-        try {
-            blAdapter.open();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+        blAdapter.open();
+
 
         final Button cancelButton = (Button) findViewById(R.id.cancelButton);
         final Button saveButton = (Button) findViewById(R.id.saveButton);
