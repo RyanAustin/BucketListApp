@@ -1,10 +1,8 @@
 package ryanaustin.com.bucketlist;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -13,26 +11,14 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
-import java.sql.SQLException;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.AsyncTask;
-import android.util.Log;
 import android.view.*;
 import android.widget.*;
 
-import java.io.InputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
 
 public class MainScreen extends Activity {
-
-    private List<Location> locations = new ArrayList<>();
     private ListView locationListView;
-    Context ctx = this;
+    private DbAdapter dbAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,18 +34,22 @@ public class MainScreen extends Activity {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent editLocationIntent = new Intent(view.getContext(), LocationScreen.class);
-                editLocationIntent.putExtra("Edit", locations.get(position));
+                Cursor c = dbAdapter.fetchLocation(id);
+                Location location = new Location(c.getLong(c.getColumnIndexOrThrow(DbAdapter.KEY_ROWID)),
+                        c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_NAME)),
+                        c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LAT)),
+                        c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LON)),
+                        c.getInt(c.getColumnIndexOrThrow(DbAdapter.KEY_VISITED)));
+
+                editLocationIntent.putExtra("Edit", location);
+
                 startActivityForResult(editLocationIntent, 1);
             }
         });
         registerForContextMenu(locationListView);
 
-        BucketListDbAdapter blAdapter = new BucketListDbAdapter(getApplicationContext());
-
-        blAdapter.open();
-        fetchData(blAdapter);
-        populateList();
-        blAdapter.close();
+        openDB();
+        populateList(dbAdapter);
 
 
 //        // show The Image
@@ -101,14 +91,9 @@ public class MainScreen extends Activity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
-        BucketListDbAdapter blAdapter = new BucketListDbAdapter(getApplicationContext());
 
-        blAdapter.open();
-        blAdapter.deleteLocation(locations.get(info.position).getRowID());
-        locations.remove(info.position);
-        populateList();
-
-        blAdapter.close();
+        dbAdapter.deleteLocation();
+        populateList(dbAdapter);
 
         return super.onContextItemSelected(item);
     }
@@ -119,22 +104,8 @@ public class MainScreen extends Activity {
             return;
         }
 
-        Serializable extraAdd = data.getSerializableExtra("Add");
-        Serializable extraEdit = data.getSerializableExtra("Edit");
-
-        if(extraAdd != null) {
-            Location newLocation = (Location)extraAdd;
-            locations.add(newLocation);
-            populateList();
-        } else if (extraEdit != null) {
-            Location newLocation = (Location)extraEdit;
-            for (int i = 0; i < locations.size(); i++) {
-                if (newLocation.getRowID() == locations.get(i).getRowID()) {
-                    locations.set(i, newLocation);
-                }
-            }
-            populateList();
-        }
+        openDB();
+        populateList(dbAdapter);
     }
 
     @Override
@@ -166,36 +137,33 @@ public class MainScreen extends Activity {
         }
     }
 
-    private void fetchData(BucketListDbAdapter adapter) {
-        Cursor c = adapter.fetchAllLocations();
-
-        for (int i = 0; i < c.getCount(); i++) {
-            c.moveToPosition(i);
-            Location location = new Location(c.getLong(c.getColumnIndexOrThrow(BucketListDbAdapter.KEY_ROWID)),
-                    c.getString(c.getColumnIndexOrThrow(BucketListDbAdapter.KEY_NAME)),
-                    c.getString(c.getColumnIndexOrThrow(BucketListDbAdapter.KEY_LAT)),
-                    c.getString(c.getColumnIndexOrThrow(BucketListDbAdapter.KEY_LON)),
-                    c.getInt(c.getColumnIndexOrThrow(BucketListDbAdapter.KEY_VISITED)));
-            locations.add(location);
-        }
-    }
-
-    private void testInputData(BucketListDbAdapter adapter){
+    private void testInputData(DbAdapter adapter){
         adapter.createLocation("Chicago", "36.258", "78.654", 0);
         adapter.createLocation("New York", "92.147", "15.243", 1);
         adapter.createLocation("Dallas", "78.246", "32.721", 0);
         adapter.createLocation("Kansas City", "80.692", "36.519", 0);
     }
 
-    private void populateList() {
-        List<String> values = new ArrayList<>();
+    private void populateList(DbAdapter adapter) {
+        Cursor c = adapter.fetchAllLocations();
 
-        for (Location location : locations) {
-            values.add(location.getLocation());
-        }
+        SimpleCursorAdapter cursorAdapter = new SimpleCursorAdapter();
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(getApplicationContext(), android.R.layout.simple_list_item_1, android.R.id.text1, values);
+        locationListView.setAdapter(cursorAdapter);
+    }
 
-        locationListView.setAdapter(adapter);
+    private void openDB() {
+        dbAdapter = new DbAdapter(getApplicationContext());
+        dbAdapter.open();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        closeDB();
+    }
+
+    private void closeDB() {
+        dbAdapter.close();
     }
 }

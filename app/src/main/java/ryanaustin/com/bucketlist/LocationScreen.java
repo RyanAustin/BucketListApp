@@ -2,33 +2,27 @@ package ryanaustin.com.bucketlist;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 
 import java.io.Serializable;
-import java.sql.SQLException;
 
 
 public class LocationScreen extends Activity {
 
-    private BucketListDbAdapter blAdapter;
+    private DbAdapter blAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_location_screen);
-        blAdapter = new BucketListDbAdapter(this);
-        try {
-            blAdapter.open();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        blAdapter = new DbAdapter(this);
+
+        blAdapter.open();
+
 
         final Button cancelButton = (Button) findViewById(R.id.cancelButton);
         final Button saveButton = (Button) findViewById(R.id.saveButton);
@@ -63,8 +57,7 @@ public class LocationScreen extends Activity {
                     blAdapter.updateLocation(location.getRowID(), location.getLocation(), location.getLatitude(),
                             location.getLongitude(), location.getVisited());
 
-                    returnIntent.putExtra("Edit", location);
-                    setResult(RESULT_OK, returnIntent);
+                    setResult(RESULT_OK);
                     finish();
                 } else {
                     Intent returnIntent = new Intent();
@@ -78,8 +71,7 @@ public class LocationScreen extends Activity {
                     blAdapter.createLocation(location.getLocation(), location.getLatitude(),
                             location.getLongitude(), location.getVisited());
 
-                    returnIntent.putExtra("Add", location);
-                    setResult(RESULT_OK, returnIntent);
+                    setResult(RESULT_OK);
                     finish();
                 }
             }

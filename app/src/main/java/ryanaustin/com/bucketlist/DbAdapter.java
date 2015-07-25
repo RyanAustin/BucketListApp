@@ -14,7 +14,7 @@ import java.sql.SQLException;
  * Date: 7/20/2015
  * Time: 5:25 PM
  */
-public class BucketListDbAdapter {
+public class DbAdapter {
 
     /**
      * Database column names
@@ -30,18 +30,17 @@ public class BucketListDbAdapter {
      */
     private static final String DATABASE_NAME = "bucketlist.db";
     private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_TABLE = "locations";
-    private static final String DATABASE_CREATE = "CREATE TABLE " + DATABASE_TABLE + " (" +
-            KEY_ROWID + " integer primary key autoincrement, " +
+    private static final String TABLE_NAME = "locations";
+    private static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
             KEY_NAME + " text not null, " +
             KEY_LAT + " text not null, " +
             KEY_LON + " text not null, " +
             KEY_VISITED + " integer not null);";
 
-    private static final String TAG = "BucketListDbAdapter";
+    private static final String TAG = "DbAdapter";
     private DatabaseHelper mDbHelper;
     private SQLiteDatabase mDb;
-    private final Context mCtx;
+    private Context mCtx;
 
     private static class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -52,7 +51,7 @@ public class BucketListDbAdapter {
         @Override
         public void onCreate(SQLiteDatabase db) {
             try {
-                db.execSQL(DATABASE_CREATE);
+                db.execSQL(CREATE_TABLE);
             } catch (android.database.SQLException e) {
                 e.printStackTrace();
             }
@@ -62,7 +61,7 @@ public class BucketListDbAdapter {
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             Log.w(TAG, "Upgrading the database from version " + oldVersion + " to " +
                     newVersion + ". This will destroy all old data.");
-            db.execSQL("DROP TABLE IF EXISTS " + DATABASE_TABLE);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
             onCreate(db);
         }
     }
@@ -73,7 +72,7 @@ public class BucketListDbAdapter {
      *
      * @param ctx the Context within which to work
      */
-    public BucketListDbAdapter (Context ctx) {
+    public DbAdapter(Context ctx) {
         this.mCtx = ctx;
         mDbHelper = new DatabaseHelper(ctx);
     }
@@ -86,7 +85,7 @@ public class BucketListDbAdapter {
      * @return this
      * @throws SQLException if the database could be neither opened or created
      */
-    public BucketListDbAdapter open(){
+    public DbAdapter open(){
         mDb = mDbHelper.getWritableDatabase();
         return this;
     }
@@ -113,7 +112,7 @@ public class BucketListDbAdapter {
         initialValues.put(KEY_LON, lon);
         initialValues.put(KEY_VISITED, visited);
 
-        return mDb.insert(DATABASE_TABLE, null, initialValues);
+        return mDb.insert(TABLE_NAME, null, initialValues);
     }
 
     /**
@@ -123,7 +122,7 @@ public class BucketListDbAdapter {
      * @return true if deleted, false otherwise
      */
     public boolean deleteLocation(long rowId) {
-        return mDb.delete(DATABASE_TABLE, KEY_ROWID + "=" + rowId, null) > 0;
+        return mDb.delete(TABLE_NAME, KEY_ROWID + "=" + rowId, null) > 0;
     }
 
     /**
@@ -132,7 +131,7 @@ public class BucketListDbAdapter {
      * @return Cursor over all locations
      */
     public Cursor fetchAllLocations() {
-        return mDb.query(DATABASE_TABLE, new String[] {KEY_ROWID, KEY_NAME,
+        return mDb.query(TABLE_NAME, new String[] {KEY_ROWID, KEY_NAME,
                 KEY_LAT, KEY_LON, KEY_VISITED}, null, null, null, null, null);
 
     }
@@ -144,8 +143,8 @@ public class BucketListDbAdapter {
      * @return Cursor positioned to matching location, if found
      * @throws SQLException if location could not be found/retrieved
      */
-    public Cursor fetchLocation(long rowId) throws SQLException {
-        Cursor mCursor = mDb.query(true, DATABASE_TABLE, new String[] {KEY_ROWID, KEY_NAME, KEY_LAT,
+    public Cursor fetchLocation(long rowId){
+        Cursor mCursor = mDb.query(true, TABLE_NAME, new String[] {KEY_ROWID, KEY_NAME, KEY_LAT,
                         KEY_LON, KEY_VISITED}, KEY_ROWID + "=" + rowId, null,
                 null, null, null, null);
 
@@ -174,6 +173,6 @@ public class BucketListDbAdapter {
         args.put(KEY_LON, lon);
         args.put(KEY_VISITED, visited);
 
-        return mDb.update(DATABASE_TABLE, args, KEY_ROWID + "=" + rowId, null) > 0;
+        return mDb.update(TABLE_NAME, args, KEY_ROWID + "=" + rowId, null) > 0;
     }
 }
