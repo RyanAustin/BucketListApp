@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -12,6 +12,8 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
+
+import ryanaustin.com.bucketlist.R;
 
 
 public class Settings extends Activity {
@@ -41,10 +43,11 @@ public class Settings extends Activity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setResult(RESULT_CANCELED, new Intent());
+                setResult(RESULT_OK);
                 finish();
             }
         });
+
         visitedSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -56,6 +59,7 @@ public class Settings extends Activity {
 
             }
         });
+
         notVisitedSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {

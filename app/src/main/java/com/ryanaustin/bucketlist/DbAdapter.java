@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -32,6 +32,7 @@ public class DbAdapter {
     private static final int DATABASE_VERSION = 1;
     private static final String TABLE_NAME = "locations";
     private static final String CREATE_TABLE = "CREATE TABLE " + TABLE_NAME + " (" +
+            KEY_ROWID + " integer primary key autoincrement, " +
             KEY_NAME + " text not null, " +
             KEY_LAT + " text not null, " +
             KEY_LON + " text not null, " +

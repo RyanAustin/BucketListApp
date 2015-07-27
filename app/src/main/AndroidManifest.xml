@@ -10,7 +10,7 @@
         android:theme="@style/AppTheme" >
         <meta-data android:name="com.google.android.geo.API_KEY" android:value="AIzaSyCWtgel0nQdRwWQ9w6Dn7fwlrmd2nB2Tv8"/>
         <activity
-            android:name=".MainScreen"
+            android:name="com.ryanaustin.bucketlist.MainScreen"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -18,11 +18,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Settings"
+            android:name="com.ryanaustin.bucketlist.Settings"
             android:label="@string/title_activity_settings" >
         </activity>
         <activity
-            android:name=".LocationScreen"
+            android:name="com.ryanaustin.bucketlist.LocationScreen"
             android:label="@string/title_activity_location_screen" >
         </activity>
     </application>

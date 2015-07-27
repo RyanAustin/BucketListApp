@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 
 import java.io.Serializable;
+
+import ryanaustin.com.bucketlist.R;
 
 
 public class LocationScreen extends Activity {

@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -7,28 +7,39 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.AdapterView;
-import android.widget.ImageView;
 import android.widget.ListView;
 
 import android.database.Cursor;
 import android.view.*;
 import android.widget.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import ryanaustin.com.bucketlist.R;
+
 
 public class MainScreen extends Activity {
     private ListView locationListView;
+    private WebView webView;
+    private SharedPreferences preferences;
     private DbAdapter dbAdapter;
+    private List<Long> storeRowID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        final ImageView imageView = (ImageView) findViewById(R.id.imageView);
-
-        SharedPreferences preferences = getSharedPreferences(Settings.PREF_NAME, 0);
+        preferences = getSharedPreferences(Settings.PREF_NAME, 0);
         locationListView = (ListView)findViewById(R.id.listView);
+        webView = (WebView) findViewById(R.id.imageWebView);
+        webView.setInitialScale(30);
+        WebSettings wSettings = webView.getSettings();
+        wSettings.setUseWideViewPort(true);
 
         locationListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -49,37 +60,9 @@ public class MainScreen extends Activity {
         registerForContextMenu(locationListView);
 
         openDB();
-        populateList(dbAdapter);
-
-
-//        // show The Image
-//        new DownloadImageTask(imageView).execute("http://maps.googleapis.com/maps/api/staticmap?size=800x800&maptype=hybrid");
+//        testInputData();
+        populateScreen();
     }
-
-//    private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
-//        ImageView bmImage;
-//
-//        public DownloadImageTask(ImageView bmImage) {
-//            this.bmImage = bmImage;
-//        }
-//
-//        protected Bitmap doInBackground(String... urls) {
-//            String urldisplay = urls[0];
-//            Bitmap mIcon11 = null;
-//            try {
-//                InputStream in = new java.net.URL(urldisplay).openStream();
-//                mIcon11 = BitmapFactory.decodeStream(in);
-//            } catch (Exception e) {
-//                Log.e("Error", e.getMessage());
-//                e.printStackTrace();
-//            }
-//            return mIcon11;
-//        }
-//
-//        protected void onPostExecute(Bitmap result) {
-//            bmImage.setImageBitmap(result);
-//        }
-//    }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
@@ -92,20 +75,18 @@ public class MainScreen extends Activity {
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
 
-        dbAdapter.deleteLocation();
-        populateList(dbAdapter);
+        dbAdapter.deleteLocation(storeRowID.get(info.position));
+        populateScreen();
 
         return super.onContextItemSelected(item);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_CANCELED){
-            return;
-        }
-
+        preferences = getSharedPreferences(Settings.PREF_NAME, 0);
+        webView.clearView();
         openDB();
-        populateList(dbAdapter);
+        populateScreen();
     }
 
     @Override
@@ -130,30 +111,70 @@ public class MainScreen extends Activity {
                 return true;
             case R.id.mainSettings:
                 Intent settingsIntent = new Intent(getApplicationContext(), Settings.class);
-                startActivity(settingsIntent);
+                startActivityForResult(settingsIntent, 3);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    private void testInputData(DbAdapter adapter){
-        adapter.createLocation("Chicago", "36.258", "78.654", 0);
-        adapter.createLocation("New York", "92.147", "15.243", 1);
-        adapter.createLocation("Dallas", "78.246", "32.721", 0);
-        adapter.createLocation("Kansas City", "80.692", "36.519", 0);
+    private void testInputData(){
+        dbAdapter.createLocation("Chicago", "41.869536", "-87.629502", 0);
+        dbAdapter.createLocation("New York", "40.719968", "-73.99032", 1);
+        dbAdapter.createLocation("Dallas", "32.792962", "-96.776315", 0);
+        dbAdapter.createLocation("Kansas City", "39.074863", "-94.562673", 0);
     }
 
-    private void populateList(DbAdapter adapter) {
-        Cursor c = adapter.fetchAllLocations();
+    private void populateScreen() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("http://maps.googleapis.com/maps/api/staticmap?size=800x800&maptype=hybrid&markers=size:mid|color:" +
+                preferences.getString("visited", "green"));
+        Cursor c = dbAdapter.fetchAllLocations();
+        storeRowID = new ArrayList<>();
+        storeRowID.clear();
 
-        SimpleCursorAdapter cursorAdapter = new SimpleCursorAdapter();
+        for (int i = 0; i < c.getCount(); i++) {
+            c.moveToPosition(i);
+            if (c.getInt(c.getColumnIndexOrThrow(DbAdapter.KEY_VISITED))==1) {
+                sb.append("|");
+                sb.append(c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LAT)));
+                sb.append(",");
+                sb.append(c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LON)));
+            }
+        }
+
+        sb.append("&markers=size:mid|color:" + preferences.getString("notVisited", "red"));
+
+        for (int i = 0; i < c.getCount(); i++) {
+            c.moveToPosition(i);
+            storeRowID.add(c.getLong(c.getColumnIndexOrThrow(DbAdapter.KEY_ROWID)));
+            if (c.getInt(c.getColumnIndexOrThrow(DbAdapter.KEY_VISITED))==0) {
+                sb.append("|");
+                sb.append(c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LAT)));
+                sb.append(",");
+                sb.append(c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LON)));
+            }
+        }
+
+        webView.loadUrl(sb.toString());
+
+        startManagingCursor(c);
+
+        String[] fromFieldNames = new String[] {DbAdapter.KEY_NAME};
+        int[] toViewIDs = new int[] {R.id.nameTextView};
+
+        SimpleCursorAdapter cursorAdapter =
+                new SimpleCursorAdapter(this,
+                    R.layout.item_layout,
+                    c,
+                    fromFieldNames,
+                    toViewIDs);
 
         locationListView.setAdapter(cursorAdapter);
     }
 
     private void openDB() {
-        dbAdapter = new DbAdapter(getApplicationContext());
+        dbAdapter = new DbAdapter(this);
         dbAdapter.open();
     }
 

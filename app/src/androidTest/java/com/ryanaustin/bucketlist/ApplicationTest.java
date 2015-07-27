@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
