@@ -1,4 +1,4 @@
-package ryanaustin.com.bucketlist;
+package com.ryanaustin.bucketlist;
 import java.io.Serializable;
 
 /**
