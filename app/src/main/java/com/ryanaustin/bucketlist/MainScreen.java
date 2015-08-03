@@ -16,9 +16,6 @@ import android.database.Cursor;
 import android.view.*;
 import android.widget.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import ryanaustin.com.bucketlist.R;
 
 
@@ -27,7 +24,6 @@ public class MainScreen extends Activity {
     private WebView webView;
     private SharedPreferences preferences;
     private DbAdapter dbAdapter;
-    private List<Long> storeRowID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,13 +42,13 @@ public class MainScreen extends Activity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent editLocationIntent = new Intent(view.getContext(), LocationScreen.class);
                 Cursor c = dbAdapter.fetchLocation(id);
-                Location location = new Location(c.getLong(c.getColumnIndexOrThrow(DbAdapter.KEY_ROWID)),
+                Locations locations = new Locations(c.getLong(c.getColumnIndexOrThrow(DbAdapter.KEY_ROWID)),
                         c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_NAME)),
                         c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LAT)),
                         c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LON)),
                         c.getInt(c.getColumnIndexOrThrow(DbAdapter.KEY_VISITED)));
 
-                editLocationIntent.putExtra("Edit", location);
+                editLocationIntent.putExtra("Edit", locations);
 
                 startActivityForResult(editLocationIntent, 1);
             }
@@ -60,7 +56,10 @@ public class MainScreen extends Activity {
         registerForContextMenu(locationListView);
 
         openDB();
+
+        // Use this method to populate test data on first run
 //        testInputData();
+
         populateScreen();
     }
 
@@ -74,8 +73,9 @@ public class MainScreen extends Activity {
     @Override
     public boolean onContextItemSelected(MenuItem item) {
         AdapterView.AdapterContextMenuInfo info = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        TextView textView = (TextView) info.targetView.findViewById(R.id.rowIdTextView);
+        dbAdapter.deleteLocation(Long.parseLong(textView.getText().toString()));
 
-        dbAdapter.deleteLocation(storeRowID.get(info.position));
         populateScreen();
 
         return super.onContextItemSelected(item);
@@ -118,6 +118,12 @@ public class MainScreen extends Activity {
         }
     }
 
+    @Override
+    protected void onDestroy() {
+        dbAdapter.close();
+        super.onDestroy();
+    }
+
     private void testInputData(){
         dbAdapter.createLocation("Chicago", "41.869536", "-87.629502", 0);
         dbAdapter.createLocation("New York", "40.719968", "-73.99032", 1);
@@ -126,12 +132,29 @@ public class MainScreen extends Activity {
     }
 
     private void populateScreen() {
+        Cursor c = dbAdapter.fetchAllLocations();
+
+        urlBuilder(c);
+
+        startManagingCursor(c);
+
+        String[] from = new String[] {DbAdapter.KEY_NAME, DbAdapter.KEY_ROWID};
+        int[] to = new int[] {R.id.nameTextView, R.id.rowIdTextView};
+
+        SimpleCursorAdapter cursorAdapter =
+                new SimpleCursorAdapter(this,
+                    R.layout.item_layout,
+                    c,
+                    from,
+                    to);
+
+        locationListView.setAdapter(cursorAdapter);
+    }
+
+    private void urlBuilder(Cursor c) {
         StringBuilder sb = new StringBuilder();
         sb.append("http://maps.googleapis.com/maps/api/staticmap?size=800x800&maptype=hybrid&markers=size:mid|color:" +
                 preferences.getString("visited", "green"));
-        Cursor c = dbAdapter.fetchAllLocations();
-        storeRowID = new ArrayList<>();
-        storeRowID.clear();
 
         for (int i = 0; i < c.getCount(); i++) {
             c.moveToPosition(i);
@@ -147,7 +170,6 @@ public class MainScreen extends Activity {
 
         for (int i = 0; i < c.getCount(); i++) {
             c.moveToPosition(i);
-            storeRowID.add(c.getLong(c.getColumnIndexOrThrow(DbAdapter.KEY_ROWID)));
             if (c.getInt(c.getColumnIndexOrThrow(DbAdapter.KEY_VISITED))==0) {
                 sb.append("|");
                 sb.append(c.getString(c.getColumnIndexOrThrow(DbAdapter.KEY_LAT)));
@@ -157,34 +179,10 @@ public class MainScreen extends Activity {
         }
 
         webView.loadUrl(sb.toString());
-
-        startManagingCursor(c);
-
-        String[] fromFieldNames = new String[] {DbAdapter.KEY_NAME};
-        int[] toViewIDs = new int[] {R.id.nameTextView};
-
-        SimpleCursorAdapter cursorAdapter =
-                new SimpleCursorAdapter(this,
-                    R.layout.item_layout,
-                    c,
-                    fromFieldNames,
-                    toViewIDs);
-
-        locationListView.setAdapter(cursorAdapter);
     }
 
     private void openDB() {
         dbAdapter = new DbAdapter(this);
         dbAdapter.open();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        closeDB();
-    }
-
-    private void closeDB() {
-        dbAdapter.close();
     }
 }

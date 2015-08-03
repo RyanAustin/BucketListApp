@@ -6,7 +6,7 @@ import java.io.Serializable;
  * Date: 7/20/2015
  * Time: 6:22 AM
  */
-public class Location implements Serializable {
+public class Locations implements Serializable {
 
     private long rowID;
     private String location;
@@ -14,11 +14,11 @@ public class Location implements Serializable {
     private String longitude;
     private int visited;
 
-    public Location() {
+    public Locations() {
 
     }
 
-    public Location(long rowID, String location, String latitude, String longitude, int visited) {
+    public Locations(long rowID, String location, String latitude, String longitude, int visited) {
         this.rowID = rowID;
         this.location = location;
         this.latitude = latitude;

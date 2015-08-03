@@ -16,6 +16,7 @@
         android:layout_height="fill_parent"
         android:id="@+id/listView"
         android:layout_gravity="center_horizontal"
-        android:layout_weight=".65"/>
+        android:layout_weight=".65"
+        android:layout_marginTop="10dp" />
 
 </LinearLayout>
