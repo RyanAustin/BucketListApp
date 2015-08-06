@@ -43,7 +43,6 @@ public class Settings extends Activity {
         backButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                setResult(RESULT_OK);
                 finish();
             }
         });
@@ -52,6 +51,7 @@ public class Settings extends Activity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 visitedSelection = SPINNER_OPTIONS[position];
+                updatePreferences();
             }
 
             @Override
@@ -64,6 +64,7 @@ public class Settings extends Activity {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 notVisitedSelection = SPINNER_OPTIONS[position];
+                updatePreferences();
             }
 
             @Override
@@ -81,13 +82,9 @@ public class Settings extends Activity {
 
     @Override
     protected void onStop() {
-        super.onStop();
+        updatePreferences();
 
-        SharedPreferences preferences = getSharedPreferences(PREF_NAME, 0);
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("visited", visitedSelection);
-        editor.putString("notVisited", notVisitedSelection);
-        editor.commit();
+        super.onStop();
     }
 
     private int getSpinnerOptionPosition(String preferences) {
@@ -97,5 +94,13 @@ public class Settings extends Activity {
             }
         }
         return 0;
+    }
+
+    private void updatePreferences() {
+        SharedPreferences preferences = getSharedPreferences(PREF_NAME, 0);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("visited", visitedSelection);
+        editor.putString("notVisited", notVisitedSelection);
+        editor.commit();
     }
 }

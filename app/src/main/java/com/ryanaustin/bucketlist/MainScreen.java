@@ -82,6 +82,15 @@ public class MainScreen extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        preferences = getSharedPreferences(Settings.PREF_NAME, 0);
+        webView.clearView();
+        openDB();
+        populateScreen();
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         preferences = getSharedPreferences(Settings.PREF_NAME, 0);
         webView.clearView();
@@ -111,7 +120,7 @@ public class MainScreen extends Activity {
                 return true;
             case R.id.mainSettings:
                 Intent settingsIntent = new Intent(getApplicationContext(), Settings.class);
-                startActivityForResult(settingsIntent, 3);
+                startActivity(settingsIntent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
